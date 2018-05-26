@@ -1,0 +1,38 @@
+{
+  "name": "ethereum-notifications",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && cp package.json dist/",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ethereum-input-data-decoder": "0.0.6",
+    "rxjs": "^6.2.0",
+    "web3": "^1.0.0-beta.34"
+  },
+  "devDependencies": {
+    "@types/jest": "^22.2.3",
+    "@types/node": "^10.1.2",
+    "jest": "^23.0.0",
+    "typescript": "^2.8.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "rootDir": "src",
+    "transform": {
+      "^.+\\.(ts|tsx)$": "<rootDir>/preprocessor.js"
+    },
+    "testMatch": [
+      "**/*/*.test.ts"
+    ]
+  }
+}
