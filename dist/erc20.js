@@ -1,4 +1,12 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -24,7 +32,51 @@ exports.getToFromDecodedInput = (input) => {
     }
     return null;
 };
-exports.createTokenTransferMapper = (web3, decoder, erc20Store) => {
+/**
+ * Does a simple cache, you can turn it off and do your own caching (e.g. redis)
+ *
+ * @param web3
+ *
+ */
+exports.createErc20Resolver = (web3, cacheResult = true) => {
+    const cache = {};
+    return {
+        resolveToken(contract) {
+            const contractInstance = new web3.eth.Contract(erc20_abi_1.erc20ABI, contract);
+            if (cache[contract]) {
+                return cache[contract];
+            }
+            return new Promise((resolve, reject) => {
+                console.log('saving erc20 data info...');
+                (() => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        const symbol = yield contractInstance.methods.symbol().call();
+                        const decimalPlaces = yield contractInstance.methods.decimals().call();
+                        const erc20Data = { symbol, contract, decimal: decimalPlaces };
+                        cache[contract] = Promise.resolve(erc20Data);
+                        resolve(erc20Data);
+                    }
+                    catch (e) {
+                        console.log(e);
+                        reject('Error occured while retrieving erctoken data');
+                    }
+                }))();
+            });
+        }
+    };
+};
+const createTransactionObservable = (web3, transaction) => {
+    return rxjs_1.of({
+        blockNumber: transaction.blockNumber,
+        blockHash: transaction.blockHash,
+        hash: transaction.hash,
+        to: transaction.to,
+        from: transaction.from,
+        symbol: `${ETH_SYMBOL}`,
+        value: web3.utils.fromWei(transaction.value, 'ether')
+    });
+};
+exports.createTokenTransferMapper = (web3, decoder, erc20Resolver) => {
     return (transaction) => {
         const { input } = transaction;
         if (input && input !== '0x') {
@@ -39,20 +91,33 @@ exports.createTokenTransferMapper = (web3, decoder, erc20Store) => {
                 const toFromInput = exports.getToFromDecodedInput(decodedInput);
                 if (toFromInput) {
                     //to is the contract
-                    return rxjs_1.from(erc20Store.getErc20TokenInfo(transaction.to))
+                    return rxjs_1.from(erc20Resolver.resolveToken(transaction.to))
                         .pipe(operators_1.map(erc20Info => {
                         return {
-                            to: toFromInput,
+                            blockNumber: transaction.blockNumber,
+                            blockHash: transaction.blockHash,
+                            value: transaction.value,
+                            hash: transaction.hash,
+                            to: transaction.to,
                             contract: transaction.to,
                             from: transaction.from,
                             symbol: erc20Info.symbol,
-                            value: utils_1.parseTokenTransferValue(decodedInput.inputs[1], erc20Info)
+                            token_transfer: {
+                                to: toFromInput,
+                                from: transaction.from,
+                                value: utils_1.parseTokenTransferValue(decodedInput.inputs[1], erc20Info),
+                                token: erc20Info
+                            }
+                            //value: 
                         };
+                    }), operators_1.catchError((e) => {
+                        console.log('Error when resolving erc20 ', e);
+                        return createTransactionObservable(web3, transaction);
                     }));
                 }
             }
         }
-        return rxjs_1.of({ to: transaction.to, from: transaction.from, symbol: `${ETH_SYMBOL}`, value: web3.utils.fromWei(transaction.value, 'ether') });
+        return createTransactionObservable(web3, transaction);
     };
 };
 //# sourceMappingURL=erc20.js.map

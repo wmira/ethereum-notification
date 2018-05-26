@@ -46,12 +46,12 @@ exports.createBlockNumberStream = (web3, options) => {
  * Returns an Observable of Transaction that can be used for notification.
  *
  * @param web3
- * @param erc20Store
+ * @param erc20Resolver
  * @param options
  */
-exports.createEthereumTransactionStream = (web3, erc20Store, options = exports.DEFAULT_TRANSACTION_STREAM_OPTION) => {
+exports.createEthereumTransactionStream = (web3, erc20Resolver, options = exports.DEFAULT_TRANSACTION_STREAM_OPTION) => {
     const blockNumber$ = exports.createBlockNumberStream(web3, options);
-    const tokenTransferMapper = erc20_1.createTokenTransferMapper(web3, erc20_1.createDecoder(), erc20Store);
+    const tokenTransferMapper = erc20_1.createTokenTransferMapper(web3, erc20_1.createDecoder(), erc20Resolver);
     const transactions$ = blockNumber$.pipe(operators_1.flatMap((blockNumber) => {
         return rxjs_1.from(web3.eth.getBlock(blockNumber, true))
             .pipe(operators_1.retry(options.getBlockRetryCount), //retry if there is an error

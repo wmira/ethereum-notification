@@ -1,7 +1,7 @@
 
 
 import { of, from, Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
+import { map, catchError, onErrorResumeNext } from 'rxjs/operators'
 import { Transaction as EthereumTransaction } from 'web3/types';
 
 import Web3 from 'web3'
@@ -9,7 +9,7 @@ import Web3 from 'web3'
 import InputDataDecoder from 'ethereum-input-data-decoder'
 
 import { parseTokenTransferValue } from './utils'
-import { TokenTransfer, Transaction, Erc20Resolver } from './types'
+import { TokenTransfer, Transaction, Erc20Resolver, Erc20Token } from './types'
 import { erc20ABI as abi } from './erc20_abi'
 
 const ETH_SYMBOL = 'ETH'
@@ -33,8 +33,54 @@ export const getToFromDecodedInput = (input: any): string => {
     }
 
     return null
-}                                        
+}                               
 
+/**
+ * Does a simple cache, you can turn it off and do your own caching (e.g. redis)
+ * 
+ * @param web3 
+ * 
+ */
+export const createErc20Resolver = (web3: Web3, cacheResult: boolean = true): Erc20Resolver => {
+
+    const cache: { [key: string]: Promise<Erc20Token> } = {}
+
+    return {
+        resolveToken(contract: string): Promise<Erc20Token> {
+            const contractInstance = new web3.eth.Contract(abi, contract);        
+            if ( cache[contract] ) {
+                return cache[contract]
+            }
+            return new Promise( (resolve, reject) => {
+                console.log('saving erc20 data info...');
+                ( async () => {
+                    try {
+                        const symbol = await contractInstance.methods.symbol().call()
+                        const decimalPlaces = await contractInstance.methods.decimals().call()
+                        const erc20Data: Erc20Token = { symbol, contract, decimal: decimalPlaces }
+                        
+                        cache[contract] = Promise.resolve(erc20Data)
+                        resolve(erc20Data)
+                    } catch (e) {
+                        console.log(e)
+                        reject('Error occured while retrieving erctoken data')
+                    }
+                })();        
+            })
+        }
+    }
+}
+const createTransactionObservable = (web3, transaction: EthereumTransaction): Observable<Transaction> => {
+    return of({
+        blockNumber: transaction.blockNumber,
+        blockHash: transaction.blockHash,
+        hash: transaction.hash,
+        to: transaction.to, 
+        from: transaction.from, 
+        symbol: `${ETH_SYMBOL}`, 
+        value: web3.utils.fromWei(transaction.value, 'ether') 
+    })
+}
 export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder, erc20Resolver: Erc20Resolver) => {
     
     return ( transaction: EthereumTransaction ): Observable<Transaction> => {
@@ -58,26 +104,29 @@ export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder,
                                 return {
                                     blockNumber: transaction.blockNumber,
                                     blockHash: transaction.blockHash,
+                                    value: transaction.value,
                                     hash: transaction.hash,
-                                    to: toFromInput, 
+                                    to: transaction.to,  //this is the contract
                                     contract: transaction.to, 
                                     from: transaction.from, 
                                     symbol: erc20Info.symbol,
-                                    value: parseTokenTransferValue(decodedInput.inputs[1], erc20Info )
+                                    token_transfer: {
+                                        to: toFromInput,
+                                        from: transaction.from,
+                                        value: parseTokenTransferValue(decodedInput.inputs[1], erc20Info ),
+                                        token: erc20Info                                        
+                                    }
+                                    //value: 
                                 }
+                            }),
+                            catchError( (e) => {
+                                console.log('Error when resolving erc20 ', e)
+                                return createTransactionObservable(web3, transaction)
                             })
                         )                        
                 }
             }                        
         }
-        return of({ 
-            blockNumber: transaction.blockNumber,
-            blockHash: transaction.blockHash,
-            hash: transaction.hash,
-            to: transaction.to, 
-            from: transaction.from, 
-            symbol: `${ETH_SYMBOL}`, 
-            value: web3.utils.fromWei(transaction.value, 'ether') 
-        })
+        return createTransactionObservable(web3, transaction)
     }
 }

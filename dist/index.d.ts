@@ -1,6 +1,6 @@
 import Web3 from 'web3';
 import { Observable } from 'rxjs';
-import { EthereumTransctionStreamOption, Erc20Store, Transaction } from './types';
+import { EthereumTransctionStreamOption, Erc20Resolver, Transaction } from './types';
 export declare const DEFAULT_TRANSACTION_STREAM_OPTION: EthereumTransctionStreamOption;
 /**
  *
@@ -13,7 +13,7 @@ export declare const createBlockNumberStream: (web3: Web3, options: EthereumTran
  * Returns an Observable of Transaction that can be used for notification.
  *
  * @param web3
- * @param erc20Store
+ * @param erc20Resolver
  * @param options
  */
-export declare const createEthereumTransactionStream: (web3: Web3, erc20Store: Erc20Store, options?: EthereumTransctionStreamOption) => Observable<Transaction>;
+export declare const createEthereumTransactionStream: (web3: Web3, erc20Resolver: Erc20Resolver, options?: EthereumTransctionStreamOption) => Observable<Transaction>;

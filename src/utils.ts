@@ -49,6 +49,6 @@ export const parseTokenTransferValue = (value: string, erc20: Erc20Token, maxDec
         const wholeNumber = paddedRawValue.substring(0, paddedRawValue.length - erc20.decimal)
         const decimalPlace = paddedRawValue.substring( wholeNumber.length ).substring(0, maxDecimalPlace)
         
-        return `${wholeNumber || '0'}.${decimalPlace}`
+        return `${parseInt(wholeNumber || '0')}.${decimalPlace}`
      
 }
