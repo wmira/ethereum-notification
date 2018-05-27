@@ -59,13 +59,13 @@ export const createErc20Resolver = (web3: Web3, cacheResult: boolean = true): Er
                         const decimalPlaces = await contractInstance.methods.decimals().call()
                         const erc20Data: Erc20Token = { symbol, contract, decimal: decimalPlaces }
                      	
-                        if ( cacheResult ) {   
+                        if ( cacheResult && erc20Data ) {   
                             cache[contract] = Promise.resolve(erc20Data)
                         }
                         resolve(erc20Data)
                     } catch (e) {
                         console.log(e)
-                        reject('Error occured while retrieving erctoken data')
+                        resolve(null)
                     }
                 })();        
             })
