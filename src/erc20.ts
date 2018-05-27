@@ -111,7 +111,8 @@ export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder,
                         token_transfer: {
                             to: toFromInput,
                             from: transaction.from,
-                            contract: transaction.to                                        
+                            contract: transaction.to,
+                            decoded_input: decodedInput                                       
                         }
                     })                                                                                                        
                 }

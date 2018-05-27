@@ -13,7 +13,8 @@ export interface Transaction {
 export interface TokenTransfer {
     to: string
     from: string
-    contract: string     
+    contract: string
+    decoded_input: any
 }
 
 export interface TokenTransferValue extends TokenTransfer {
