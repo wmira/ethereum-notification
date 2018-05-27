@@ -99,32 +99,21 @@ export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder,
                 const toFromInput = getToFromDecodedInput(decodedInput)
                 if ( toFromInput ) {
                     //to is the contract
-                    return from(erc20Resolver.resolveToken(transaction.to))
-                        .pipe(
-                            map( erc20Info => {
-                                return {
-                                    blockNumber: transaction.blockNumber,
-                                    blockHash: transaction.blockHash,
-                                    value: transaction.value,
-                                    hash: transaction.hash,
-                                    to: transaction.to,  //this is the contract
-                                    contract: transaction.to, 
-                                    from: transaction.from, 
-                                    symbol: erc20Info.symbol,
-                                    token_transfer: {
-                                        to: toFromInput,
-                                        from: transaction.from,
-                                        value: parseTokenTransferValue(decodedInput.inputs[1], erc20Info ),
-                                        token: erc20Info                                        
-                                    }
-                                    //value: 
-                                }
-                            }),
-                            catchError( (e) => {
-                                console.log('Error when resolving erc20 ', e)
-                                return createTransactionObservable(web3, transaction)
-                            })
-                        )                        
+                    return  of({
+                        blockNumber: transaction.blockNumber,
+                        blockHash: transaction.blockHash,
+                        value: transaction.value,
+                        hash: transaction.hash,
+                        to: transaction.to,  //this is the contract
+                        contract: transaction.to, 
+                        from: transaction.from, 
+                        symbol: '',
+                        token_transfer: {
+                            to: toFromInput,
+                            from: transaction.from,
+                            contract: transaction.to                                        
+                        }
+                    })                                                                                                        
                 }
             }                        
         }
