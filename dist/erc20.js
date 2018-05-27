@@ -53,14 +53,14 @@ exports.createErc20Resolver = (web3, cacheResult = true) => {
                         const symbol = yield contractInstance.methods.symbol().call();
                         const decimalPlaces = yield contractInstance.methods.decimals().call();
                         const erc20Data = { symbol, contract, decimal: decimalPlaces };
-                        if (cacheResult) {
+                        if (cacheResult && erc20Data) {
                             cache[contract] = Promise.resolve(erc20Data);
                         }
                         resolve(erc20Data);
                     }
                     catch (e) {
                         console.log(e);
-                        reject('Error occured while retrieving erctoken data');
+                        resolve(null);
                     }
                 }))();
             });
