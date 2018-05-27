@@ -58,8 +58,10 @@ export const createErc20Resolver = (web3: Web3, cacheResult: boolean = true): Er
                         const symbol = await contractInstance.methods.symbol().call()
                         const decimalPlaces = await contractInstance.methods.decimals().call()
                         const erc20Data: Erc20Token = { symbol, contract, decimal: decimalPlaces }
-                        
-                        cache[contract] = Promise.resolve(erc20Data)
+                     	
+                        if ( cacheResult ) {   
+                            cache[contract] = Promise.resolve(erc20Data)
+                        }
                         resolve(erc20Data)
                     } catch (e) {
                         console.log(e)
@@ -91,7 +93,6 @@ export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder,
             try {
                 decodedInput = decoder.decodeData(input)
             } catch ( err ) {
-
                 console.error("Error on decode ", err)
             }
             if ( decodedInput != null ) {

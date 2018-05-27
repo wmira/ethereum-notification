@@ -32,11 +32,12 @@ export const expandLatestBlock = (latestBlock: LatestBlock): number[] => {
 
 export const parseTokenTransferValue = (value: string, erc20: Erc20Token, maxDecimalPlace: number = 4) => {
     
+    try {
         const rawValue = value       
         const decimalLength = erc20.decimal
-    
+
         let paddedRawValue = rawValue
-    
+
         if ( decimalLength > rawValue.length ) {
             const padSize = decimalLength - rawValue.length
             let pad = ''
@@ -45,10 +46,14 @@ export const parseTokenTransferValue = (value: string, erc20: Erc20Token, maxDec
             }
             paddedRawValue = `${pad}${paddedRawValue}`
         }
-    
+
         const wholeNumber = paddedRawValue.substring(0, paddedRawValue.length - erc20.decimal)
         const decimalPlace = paddedRawValue.substring( wholeNumber.length ).substring(0, maxDecimalPlace)
-        
+
         return `${parseInt(wholeNumber || '0')}.${decimalPlace}`
-     
+    } catch ( e ) {
+        console.error('Error parsing transver value ', value, erc20)
+        return `0.0`
+    }
+       
 }
