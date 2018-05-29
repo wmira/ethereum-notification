@@ -19,7 +19,7 @@ export const expandLatestBlock = (latestBlock: LatestBlock): number[] => {
         return [ latest ]
     }
 
-    let blocks = []
+    let blocks: number[] = []
 
     for( let i = lastKnown + 1; i <= latest; i ++ ) {
         blocks = blocks.concat([i])
