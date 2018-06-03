@@ -1,3 +1,5 @@
+import { Transaction as Web3Transaction } from 'web3/types'
+
 export interface Transaction {
     blockNumber: number
     blockHash: string
@@ -7,7 +9,8 @@ export interface Transaction {
     value: string
     symbol: string
     token_transfer?: TokenTransfer
-    token_transfer_value?: TokenTransferValue    
+    token_transfer_value?: TokenTransferValue
+    web3Transaction: Web3Transaction
 }
 
 export interface TokenTransfer {

@@ -80,7 +80,8 @@ const createTransactionObservable = (web3: Web3, transaction: EthereumTransactio
         to: transaction.to, 
         from: transaction.from, 
         symbol: `${ETH_SYMBOL}`, 
-        value: web3.utils.fromWei(transaction.value, 'ether').toString()
+        value: web3.utils.fromWei(transaction.value, 'ether').toString(),
+        web3Transaction: transaction
     })
 }
 export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder, erc20Resolver: Erc20Resolver) => {
@@ -113,7 +114,8 @@ export const createTokenTransferMapper = (web3: Web3, decoder: InputDataDecoder,
                             from: transaction.from,
                             contract: transaction.to,
                             decoded_input: decodedInput                                       
-                        }
+                        },
+                        web3Transaction: transaction
                     })                                                                                                        
                 }
             }                        
